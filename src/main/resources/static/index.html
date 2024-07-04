@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pekara Knezevic</title>
+    <link rel="stylesheet" href="<c:url value='/resource/css/style.css' />">
+</head>
+<body onload="dohvatiPeciva()">
+    <div class="app">
+
+        <header>
+
+        </header>
+    
+        <main>  
+            <h2>Peciva</h2>
+            <figure id="peciva">
+
+            </figure>
+        </main>
+
+        <div class="create-new-thread">
+            <span>Pecivo:</span>
+            <input type="text" id="imePeciva" placeholder="Ime...">
+            <span>Cena peciva:</span>
+            <input type="number" id="cenaPeciva" placeholder="Cena...">
+            <button onclick="DodajPecivo()">Registruj novo pecivo</button>
+        </div>
+
+        <span id="trenutnoPecivo" hidden></span>
+        <header>
+            <h2>Kupovine:</h2>
+        </header>
+
+        <figure class="kupovine" id="kupovine">
+
+            <div class="kupovina">
+                <span>Odradjena: </span>
+                <span>Burek od nutele</span>
+                <span>4000</span>
+            </div>
+
+
+
+        </figure>
+
+        <footer>
+            Ukupna cena: <span id="ukupnaCena"></span>
+        </footer>
+
+        <figure class="dodajNoviPoklon">
+            <input type="text" placeholder="Broj peciva" id="brojPeciva">
+            <button onclick="dodajKupovinu()">Dodaj</button>
+        </figure>
+
+    </div>
+    
+    <script>
+        function dohvatiPeciva(){
+            let peciva = document.getElementById("peciva")
+            peciva.innerHTML=""
+
+            fetch("http://localhost:8080/getPeciva").then(e=>e.json()).then(response =>{
+                console.log("Log za burek:" + response)
+
+                response.forEach(pecivo => {
+                    document.getElementById("trenutnoPecivo").innerHTML = pecivo.pecivoId;
+                    peciva.innerHTML +=
+                    `
+                    <div class="rodjendan">
+                        <span class="rodjendan-za" id="rodjendanZa">Ime peciva: ${pecivo.imePeciva}</span>
+                        <span class="rodjendan-datum" id="rodjendanDatum">Cena peciva: ${pecivo.cenaPeciva}</span>
+                       <button onclick="ucitajKupovine(${pecivo.pecivoId})">Saznaj vise</button>
+                    </div>
+                    `
+                });
+            })
+        }
+
+        function ucitajKupovine(pecivoId){
+            let kupovine = document.getElementById("kupovine")
+            kupovine.innerHTML = ""
+            console.log(pecivoId)
+            document.getElementById("trenutnoPecivo").innerHTML = pecivoId
+            fetch("http://localhost:8080/dohvatiKupovineZaPecivo/" + pecivoId).then(e=>e.json()).then(response =>{
+                console.log("Pokusava da ucita kupovine" + response)
+                let ukupnaCena = 0;
+                response.forEach(kupovina =>{
+                    ukupnaCena += kupovina.cena;
+                    kupovine.innerHTML +=
+                    `
+                    <div class="kupovina">
+                        <span>vreme kupovine: ${kupovina.vremeKupovine}</span>
+                        <span>broj peciva: ${kupovina.brojPeciva}</span>
+                        <span>cena peciva: ${kupovina.cena}</span>
+                    </div>
+                    `
+                });
+                document.getElementById("ukupnaCena").innerHTML = ukupnaCena
+            })
+        }
+
+        function dodajKupovinu(){
+            fetch("http://localhost:8080/dodajKupovinu", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    brojPeciva: document.getElementById("brojPeciva").value,
+                    pecivoId: parseInt(document.getElementById("trenutnoPecivo").innerHTML)
+                })
+            })
+        }
+
+        function DodajPecivo(){
+            let imePeciva = document.getElementById("imePeciva").value;
+            let cenaPeciva = document.getElementById("cenaPeciva").value;
+            fetch("http://localhost:8080/dodajPecivo", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    imePeciva: imePeciva,
+                    cenaPeciva: cenaPeciva
+                })
+            }).then(e=>dohvatiPeciva())
+
+            
+        }
+        
+
+    </script>
+    
+</body>
+</html>
